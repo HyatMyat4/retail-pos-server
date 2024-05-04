@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id            Int       @id @default(autoincrement())
+  name          String    @default("")
+  email         String    @default("")
+  phone_number  Int
+  password      String    @default("")
+  refresh_token String    @default("")
+  created_at    DateTime  @default(now())
+  last_login    DateTime  @default(now()) @updatedAt
+  company       company[]
+}
+
+model company {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  company_name String   @default("")
+  created_at   DateTime @default(now())
+  update_at    DateTime @default(now()) @updatedAt
+  user         user     @relation(fields: [userId], references: [id])
+  userId       Int
+}
+
+model employee {
+  id            Int    @id @default(autoincrement())
+  company_id    Int
+  name          String @default("")
+  face_img      String @default("")
+  nrc_front_img String @default("")
+  nrc_back_img  String @default("")
+  contract_img  String @default("")
+  phone_number  String @default("")
+  email         String @default("")
+  passcode      String @default("")
+  role          Role
+}
+
+enum Role {
+  OWNER
+  SUPERVISOR
+  MANAGER
+  STAFF
+}
+
+model categories {
+  id         Int    @id @default(autoincrement())
+  company_id Int
+  name       String
+  item       item[]
+}
+
+model item {
+  id                           Int        @id @default(autoincrement())
+  company_id                   Int
+  image_url                    String?    @default("")
+  item_name                    String     @default("")
+  one_item_price               Int        @default(0)
+  one_pack_price               Int        @default(0)
+  one_carton_price             Int        @default(0)
+  buying_price_by_item         Int        @default(0)
+  having_items_qty             Int        @default(0)
+  having_packing_qty           Int        @default(0)
+  having_carton_qty            Int        @default(0)
+  expire_at                    DateTime
+  item_barcode                 String     @default("")
+  packing_barcode              String?    @default("")
+  carton_barcode               String?    @default("")
+  items_price_by_product_qty   Json?
+  packing_price_by_product_qty Json?
+  carton_price_by_product_qty  Json?
+  categorie_id                 Int
+  categorie                    categories @relation(fields: [categorie_id], references: [id])
+  created_at                   DateTime   @default(now())
+  updated_at                   DateTime   @default(now()) @updatedAt
+}
