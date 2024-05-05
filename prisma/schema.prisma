@@ -16,7 +16,7 @@ datasource db {
 model user {
   id            Int       @id @default(autoincrement())
   name          String    @default("")
-  email         String    @default("")
+  email         String    @unique
   phone_number  Int
   password      String    @default("")
   refresh_token String    @default("")
@@ -38,7 +38,7 @@ model company {
 model employee {
   id            Int    @id @default(autoincrement())
   company_id    Int
-  name          String @default("")
+  name          String @unique
   face_img      String @default("")
   nrc_front_img String @default("")
   nrc_back_img  String @default("")
