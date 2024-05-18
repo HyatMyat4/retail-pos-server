@@ -1,12 +1,19 @@
-export class SigninDto {
+import { IsString, IsEmail, IsEnum } from 'class-validator';
+export class StaffSigninDto {
+  @IsString()
   staff_name: string;
-  password?: string;
-  passcode?: string;
+  @IsString()
+  passcode: string;
 }
 export class SignupDto {
+  @IsString()
   name: string;
+  @IsString()
   company_name: string;
+  @IsString()
   phone_number: string;
+  @IsEmail()
   email: string;
+  @IsString()
   password: string;
 }

@@ -8,21 +8,21 @@ import {
   Delete,
 } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
-import { SigninDto, SignupDto } from './dto/signin-authentication.dto';
+import { StaffSigninDto, SignupDto } from './dto/signin-authentication.dto';
 import { UpdateAuthenticationDto } from './dto/update-authentication.dto';
-
+import { ValidationPipe } from '@nestjs/common';
 @Controller('authentication')
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
 
-  @Post('signin')
-  createSignin(@Body() createSigninDto: SigninDto) {
+  @Post('staff-signin')
+  createSignin(@Body() createSigninDto: StaffSigninDto) {
     return this.authenticationService.createSignIn(createSigninDto);
   }
 
   @Post('signup')
-  createSignup(@Body() createSignupDto: SignupDto) {
-    return this.authenticationService.createSignUp(createSignupDto);
+  async createSignup(@Body(ValidationPipe) createSignupDto: SignupDto) {
+    return await this.authenticationService.createSignUp(createSignupDto);
   }
 
   @Get()
