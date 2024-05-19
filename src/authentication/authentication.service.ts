@@ -1,20 +1,50 @@
 import { Injectable } from '@nestjs/common';
-import { StaffSigninDto, SignupDto } from './dto/signin-authentication.dto';
 import { UpdateAuthenticationDto } from './dto/update-authentication.dto';
 import { DatabaseService } from 'src/database/database.service';
+import { JwtService } from '@nestjs/jwt';
 import {
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import {
+  SignupDto,
+  StaffSigninDto,
+  AdminSigninDto,
+  ViladateUserDto,
+} from './dto/signin-authentication.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthenticationService {
-  constructor(private readonly DatabaseService: DatabaseService) {}
+  constructor(
+    private readonly DatabaseService: DatabaseService,
+    private JwtService: JwtService,
+  ) {}
 
-  createSignIn(createSigninDto: StaffSigninDto) {
+  staffSignIn(staffSignIn: StaffSigninDto) {
     return 'This action adds a new authentication';
   }
+
+  async adminSignIn(adminSignInDto: AdminSigninDto) {
+    console.log(adminSignInDto, '# AdminSignInDto');
+    console.log('In Case....');
+    const user = await this.DatabaseService.user.findUnique({
+      where: {
+        email: adminSignInDto?.email,
+      },
+    });
+    const payload = {
+      id: user?.id,
+      email: user?.email,
+    };
+
+    return {
+      ...user,
+      accessToken: this.JwtService.sign(payload, { expiresIn: '5m' }),
+      refreshToken: this.JwtService.sign(payload, { expiresIn: '7d' }),
+    };
+  }
+
   async createSignUp(createSignupDto: SignupDto) {
     const hashedPassword = await bcrypt.hash(createSignupDto?.password, 15);
 
@@ -46,5 +76,20 @@ export class AuthenticationService {
 
   remove(id: number) {
     return `This action removes a #${id} authentication`;
+  }
+
+  async viladateUser(viladateUserDto: ViladateUserDto) {
+    console.log('In Case....');
+    const user = await this.DatabaseService.user.findUnique({
+      where: {
+        email: viladateUserDto?.email,
+      },
+    });
+    if (user && bcrypt.compare(viladateUserDto?.password, user?.password)) {
+      delete user.password;
+      delete user.refresh_token;
+      return user;
+    }
+    return null;
   }
 }

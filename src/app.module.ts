@@ -8,11 +8,13 @@ import { AuthenticationModule } from './authentication/authentication.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from './logger/logger.module';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 @Module({
   imports: [
     DatabaseModule,
     ItemModule,
     AuthenticationModule,
+    LoggerModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
@@ -25,7 +27,6 @@ import { LoggerModule } from './logger/logger.module';
         limit: 20,
       },
     ]),
-    LoggerModule,
   ],
   controllers: [AppController],
   providers: [
@@ -35,6 +36,7 @@ import { LoggerModule } from './logger/logger.module';
       useClass: ThrottlerGuard,
     },
     AuthenticationService,
+    JwtService,
   ],
 })
 export class AppModule {}

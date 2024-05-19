@@ -17,3 +17,12 @@ export class SignupDto {
   @IsString()
   password: string;
 }
+
+export class AdminSigninDto {
+  @IsString()
+  email: string;
+  @IsString()
+  password: string;
+}
+
+export class ViladateUserDto extends AdminSigninDto {}
