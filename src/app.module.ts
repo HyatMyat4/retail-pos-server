@@ -9,8 +9,17 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from './logger/logger.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { CompanyModule } from './company/company.module';
+import { DatabaseService } from './database/database.service';
+import { CompanyService } from './company/company.service';
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local'],
+    }),
     DatabaseModule,
     ItemModule,
     AuthenticationModule,
@@ -27,6 +36,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
         limit: 20,
       },
     ]),
+    CompanyModule,
   ],
   controllers: [AppController],
   providers: [
@@ -37,6 +47,8 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
     },
     AuthenticationService,
     JwtService,
+    DatabaseService,
+    CompanyService,
   ],
 })
 export class AppModule {}

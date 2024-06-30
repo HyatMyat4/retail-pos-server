@@ -16,14 +16,15 @@ import {
   SignupDto,
 } from './dto/signin-authentication.dto';
 import { UpdateAuthenticationDto } from './dto/update-authentication.dto';
-import { ValidationPipe } from '@nestjs/common';
+
 import { LocalGuard } from './guards/local.auth.guard';
-@Controller('authentication')
+
+@Controller('/v1/auth')
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
 
   @Post('staff-signin')
-  staffSignIn(@Body(ValidationPipe) staffSignIn: StaffSigninDto) {
+  staffSignIn(@Body() staffSignIn: StaffSigninDto) {
     return this.authenticationService.staffSignIn(staffSignIn);
   }
 
@@ -37,7 +38,7 @@ export class AuthenticationController {
   }
 
   @Post('signup')
-  async createSignup(@Body(ValidationPipe) createSignupDto: SignupDto) {
+  async createSignup(@Body() createSignupDto: SignupDto) {
     return await this.authenticationService.createSignUp(createSignupDto);
   }
 

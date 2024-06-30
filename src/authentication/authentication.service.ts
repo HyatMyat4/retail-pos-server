@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UpdateAuthenticationDto } from './dto/update-authentication.dto';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from '../database/database.service';
 import { JwtService } from '@nestjs/jwt';
 import {
   NotFoundException,
@@ -13,11 +13,13 @@ import {
   ViladateUserDto,
 } from './dto/signin-authentication.dto';
 import * as bcrypt from 'bcrypt';
+import { CompanyService } from '../company/company.service';
 
 @Injectable()
 export class AuthenticationService {
   constructor(
-    private readonly DatabaseService: DatabaseService,
+    private readonly databaseService: DatabaseService,
+    private readonly companyService: CompanyService,
     private JwtService: JwtService,
   ) {}
 
@@ -28,11 +30,13 @@ export class AuthenticationService {
   async adminSignIn(adminSignInDto: AdminSigninDto) {
     console.log(adminSignInDto, '# AdminSignInDto');
     console.log('In Case....');
-    const user = await this.DatabaseService.user.findUnique({
+    const user = await this.databaseService.user.findUnique({
       where: {
         email: adminSignInDto?.email,
       },
     });
+    delete user.password;
+
     const payload = {
       id: user?.id,
       email: user?.email,
@@ -40,7 +44,7 @@ export class AuthenticationService {
 
     return {
       ...user,
-      accessToken: this.JwtService.sign(payload, { expiresIn: '5m' }),
+      accessToken: this.JwtService.sign(payload, { expiresIn: '30m' }),
       refreshToken: this.JwtService.sign(payload, { expiresIn: '7d' }),
     };
   }
@@ -48,18 +52,44 @@ export class AuthenticationService {
   async createSignUp(createSignupDto: SignupDto) {
     const hashedPassword = await bcrypt.hash(createSignupDto?.password, 15);
 
-    const createResponse = await this.DatabaseService.user.create({
-      data: {
-        name: createSignupDto?.name,
-        email: createSignupDto?.email,
-        phone_number: createSignupDto?.phone_number,
-        password: hashedPassword,
+    const createUserResult = await this.databaseService.$transaction(
+      async (prisma) => {
+        return await prisma.user.create({
+          data: {
+            name: createSignupDto.name,
+            email: createSignupDto.email,
+            phone_number: createSignupDto.phone_number,
+            password: hashedPassword,
+          },
+        });
       },
-    });
-    if (!createResponse)
+    );
+
+    delete createUserResult.password;
+
+    if (!createUserResult)
       throw new InternalServerErrorException('Failed to create user.');
 
-    return createResponse;
+    const createCompany: { message: string; result: any } | any =
+      await this.companyService.create({
+        user_id: createUserResult?.id,
+        company_name: createSignupDto?.company_name,
+      });
+
+    if (createCompany?.message !== 'ok') {
+      await this.databaseService.user.delete({
+        where: {
+          id: +createUserResult?.id,
+        },
+      });
+      throw new InternalServerErrorException('Failed to create company.');
+    }
+
+    return {
+      message: 'ok',
+      userResult: createUserResult,
+      companyResult: createCompany?.result,
+    };
   }
 
   findAll() {
@@ -80,7 +110,7 @@ export class AuthenticationService {
 
   async viladateUser(viladateUserDto: ViladateUserDto) {
     console.log('In Case....');
-    const user = await this.DatabaseService.user.findUnique({
+    const user = await this.databaseService.user.findUnique({
       where: {
         email: viladateUserDto?.email,
       },
