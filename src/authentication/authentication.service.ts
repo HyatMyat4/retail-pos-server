@@ -41,9 +41,9 @@ export class AuthenticationService {
       id: user?.id,
       email: user?.email,
     };
-
     return {
       ...user,
+      message: 'ok',
       accessToken: this.JwtService.sign(payload, { expiresIn: '30m' }),
       refreshToken: this.JwtService.sign(payload, { expiresIn: '7d' }),
     };

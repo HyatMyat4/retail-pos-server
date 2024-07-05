@@ -15,6 +15,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.setGlobalPrefix('api');
 
-  await app.listen(process.env.PORT || 3000, process.env.HOST);
+  const port = process.env.PORT || 3000;
+  const host = process.env.HOST || '0.0.0.0';
+
+  await app.listen(port, host);
 }
 bootstrap();
+//How can i add HOST
