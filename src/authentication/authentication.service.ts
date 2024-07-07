@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UpdateAuthenticationDto } from './dto/update-authentication.dto';
 import { DatabaseService } from '../database/database.service';
+import {
+  faileToCreateMessage,
+  dataNotFoundMessage,
+} from '../utils/errorMessages';
+import { CompanyService } from '../company/company.service';
 import { JwtService } from '@nestjs/jwt';
 import {
   NotFoundException,
@@ -13,7 +18,6 @@ import {
   ViladateUserDto,
 } from './dto/signin-authentication.dto';
 import * as bcrypt from 'bcrypt';
-import { CompanyService } from '../company/company.service';
 
 @Injectable()
 export class AuthenticationService {
@@ -30,12 +34,9 @@ export class AuthenticationService {
   async adminSignIn(adminSignInDto: AdminSigninDto) {
     console.log(adminSignInDto, '# AdminSignInDto');
     console.log('In Case....');
-    const user = await this.databaseService.user.findUnique({
-      where: {
-        email: adminSignInDto?.email,
-      },
-    });
-    delete user.password;
+    const user = await this.viladateUser(adminSignInDto);
+    console.log(user, '** **');
+    if (!user) return new NotFoundException(dataNotFoundMessage('User'));
 
     const payload = {
       id: user?.id,
@@ -44,6 +45,7 @@ export class AuthenticationService {
 
     return {
       ...user,
+      message: 'ok',
       accessToken: this.JwtService.sign(payload, { expiresIn: '30m' }),
       refreshToken: this.JwtService.sign(payload, { expiresIn: '7d' }),
     };
@@ -68,7 +70,7 @@ export class AuthenticationService {
     delete createUserResult.password;
 
     if (!createUserResult)
-      throw new InternalServerErrorException('Failed to create user.');
+      return new InternalServerErrorException(faileToCreateMessage('User'));
 
     const createCompany: { message: string; result: any } | any =
       await this.companyService.create({
@@ -82,7 +84,7 @@ export class AuthenticationService {
           id: +createUserResult?.id,
         },
       });
-      throw new InternalServerErrorException('Failed to create company.');
+      return new InternalServerErrorException(faileToCreateMessage('Company'));
     }
 
     return {
@@ -115,7 +117,11 @@ export class AuthenticationService {
         email: viladateUserDto?.email,
       },
     });
-    if (user && bcrypt.compare(viladateUserDto?.password, user?.password)) {
+    const compareResult = await bcrypt.compare(
+      viladateUserDto?.password,
+      user?.password,
+    );
+    if (user && compareResult) {
       delete user.password;
       delete user.refresh_token;
       return user;

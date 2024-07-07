@@ -29,12 +29,8 @@ export class AuthenticationController {
   }
 
   @Post('admin-signin')
-  @UseGuards(LocalGuard)
-  adminSignIn(@Request() req) {
-    console.log(req?.user);
-    console.log('In Case...');
-    return req.user;
-    //this.authenticationService.adminSignIn(req.user);
+  async adminSignIn(@Body() adminSigninDto: AdminSigninDto) {
+    return await this.authenticationService.adminSignIn(adminSigninDto);
   }
 
   @Post('signup')
